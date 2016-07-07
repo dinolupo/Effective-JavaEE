@@ -313,3 +313,66 @@ In this step we create simple CRUD services and modify the test class accordingl
 ```
 
 
+### 08.Separating The Concerns of A Boundary
+
+Mantaining all the business behaviours in the Rest resource class, can be complicated when you want to create unit tests. So you shoud put all the behaviours in a separate class and inject an instance into the rest resource:
+
+> move all the behaviours into a EJB manager class:
+
+```java
+@Stateless
+public class TodosManager {
+
+    public ToDo findById(long id) {
+        return new ToDo("Implement Rest Service Endpoint id="+id, "modify the test accordingly", 100);
+    }
+
+    public void delete(long id) {
+        System.out.printf("Deleted Object with id=%d\n", id);
+    }
+
+    public List<ToDo> findAll() {
+        List<ToDo> all = new ArrayList<>();
+        all.add(findById(42));
+        return all;
+    }
+
+    public void save(ToDo todo) {
+        System.out.printf("Saved ToDo: %s\n", todo);
+    }
+}
+``` 
+
+> Inject the property into the resource class
+
+```java
+@Stateless
+@Path("todos")
+public class TodosResource {
+
+    @Inject
+    TodosManager todosManager;
+
+    @GET
+    @Path("{id}")
+    public ToDo find(@PathParam("id") long id){
+        return todosManager.findById(id);
+    }
+
+    @DELETE
+    @Path("{id}")
+    public void delete(@PathParam("id") long id) {
+        todosManager.delete(id);
+    }
+
+    @GET
+    public List<ToDo> all() {
+        return todosManager.findAll();
+    }
+    
+    @POST
+    public void save(ToDo todo) {
+        todosManager.save(todo);
+    }
+}
+```
