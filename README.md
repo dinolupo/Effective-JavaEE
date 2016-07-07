@@ -193,7 +193,7 @@ public class TodosResourceTest {
 Later on this can become a build job in a Jenkins pipeline to do continuous integration / deployment.
 
 
-### Entities
+### 06.The Entity In BCE
 
 Instead of a String we should manage entities, so we create an Entity class:
 
@@ -243,4 +243,73 @@ and the test accordingly:
         assertThat(payload.getString("caption"), startsWith("Implement Rest Service"));
     }
 ```
+
+### 07.Create Read Update Delete With JAX-RS
+
+In this step we create simple CRUD services and modify the test class accordingly.
+
+> modified methods of ToDoResource.java
+
+```java
+    @GET
+    @Path("{id}")
+    public ToDo find(@PathParam("id") long id){
+        return new ToDo("Implement Rest Service Endpoint id="+id, "modify the test accordingly", 100);
+    }
+
+    @DELETE
+    @Path("{id}")
+    public void delete(@PathParam("id") long id) {
+        System.out.printf("Deleted Object with id=%d\n", id);
+    }
+
+    @GET
+    public List<ToDo> all() {
+        List<ToDo> all = new ArrayList<>();
+        all.add(find(42));
+        return all;
+    }
+
+    @POST
+    public void save(ToDo todo) {
+        System.out.printf("Saved ToDo: %s\n", todo);
+    }
+```
+
+**we have used POST because later on we will use a technical key in the Entity. If you use a business key, a key with a meaning for the business, then use PUT so you can pass a key along with the client call. PUT is idempotent.**
+
+
+> test class
+
+```java
+  @Test
+    public void crud() throws Exception {
+        // GET all
+        Response response = target.request(MediaType.APPLICATION_JSON).get();
+        assertThat(response.getStatusInfo(),is(Response.Status.OK));
+        JsonArray allTodos = response.readEntity(JsonArray.class);
+        assertFalse(allTodos.isEmpty());
+
+        JsonObject todo = allTodos.getJsonObject(0);
+        assertThat(todo.getString("caption"), startsWith("Implement Rest Service"));
+
+        // GET with id
+        JsonObject jsonObject = target.
+                path("42").
+                request(MediaType.APPLICATION_JSON).
+                get(JsonObject.class);
+
+        assertTrue(jsonObject.getString("caption").contains("42"));
+
+        Response deleteResponse = target.
+                path("42").
+                request(MediaType.APPLICATION_JSON)
+                .delete();
+
+        // DELETE
+        assertThat(deleteResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
+
+    }
+```
+
 

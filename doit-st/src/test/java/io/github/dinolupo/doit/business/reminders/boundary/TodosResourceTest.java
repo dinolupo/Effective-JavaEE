@@ -1,11 +1,12 @@
 package io.github.dinolupo.doit.business.reminders.boundary;
 
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -28,10 +29,31 @@ public class TodosResourceTest {
     }
 
     @Test
-    public void fetchTodos() throws Exception {
+    public void crud() throws Exception {
+        // GET all
         Response response = target.request(MediaType.APPLICATION_JSON).get();
-        assertThat(response.getStatus(),is(200));
-        JsonObject payload = response.readEntity(JsonObject.class);
-        assertThat(payload.getString("caption"), startsWith("Implement Rest Service"));
+        assertThat(response.getStatusInfo(),is(Response.Status.OK));
+        JsonArray allTodos = response.readEntity(JsonArray.class);
+        assertFalse(allTodos.isEmpty());
+
+        JsonObject todo = allTodos.getJsonObject(0);
+        assertThat(todo.getString("caption"), startsWith("Implement Rest Service"));
+
+        // GET with id
+        JsonObject jsonObject = target.
+                path("42").
+                request(MediaType.APPLICATION_JSON).
+                get(JsonObject.class);
+
+        assertTrue(jsonObject.getString("caption").contains("42"));
+
+        Response deleteResponse = target.
+                path("42").
+                request(MediaType.APPLICATION_JSON)
+                .delete();
+
+        // DELETE
+        assertThat(deleteResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
+
     }
 }
