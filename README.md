@@ -376,3 +376,57 @@ public class TodosResource {
     }
 }
 ```
+
+### 09.Saving The State With JPA
+
+After creating the `TodosManager` class, that is a protocol neutral boundary class, we can use it to save data with JPA. 
+
+1) Annotate the ToDo class with `@Entity`
+
+2) Annotate the `id` property with `@Id` and `@GeneratedValue` since it is a technical key
+
+3) Create a persistence unit, putting the `META-INF/persistance.xml` in the war package:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" version="2.1">
+    <persistence-unit name="production" transaction-type="JTA">
+        <properties>
+            <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+
+4) Change `TodosManager` to use JPA as follows:
+
+> inject the EntityManager
+
+```java
+@Stateless
+public class TodosManager {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    public ToDo findById(long id) {
+        return entityManager.find(ToDo.class, id);
+    }
+
+
+    public void delete(long id) {
+        ToDo reference = entityManager.getReference(ToDo.class, id);
+        entityManager.remove(reference);
+    }
+
+
+    public List<ToDo> findAll() {
+        return entityManager.createNamedQuery(ToDo.findAll, ToDo.class).getResultList();
+    }
+
+    public void save(ToDo todo) {
+        entityManager.merge(todo);
+    }
+}
+```
+

@@ -1,5 +1,9 @@
 package io.github.dinolupo.doit.business.reminders.entity;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.NamedQuery;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -7,11 +11,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 /**
  * Created by dinolupo.github.io on 06/07/16.
  */
+@Entity
+@NamedQuery(name = ToDo.findAll, query = "SELECT t FROM ToDo t")
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ToDo {
 
+    final static String PREFIX = "reminders.entity.";
+    public final static String findAll = PREFIX + "findAll";
+
     //technical key
+    @Id
+    @GeneratedValue
     long id;
 
     private String caption;
