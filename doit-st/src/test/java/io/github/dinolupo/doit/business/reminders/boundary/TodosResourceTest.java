@@ -44,12 +44,27 @@ public class TodosResourceTest {
         String location = postResponse.getHeaderString("Location");
         System.out.printf("location = %s\n", location);
 
-        // GET with id, using the location returned before
+        // GET {id}, using the location returned before
         JsonObject jsonObject = client.target(location)
                 .request(MediaType.APPLICATION_JSON)
                 .get(JsonObject.class);
 
         assertTrue(jsonObject.getString("caption").contains("Implement Rest Service with JPA"));
+
+        // update with PUT
+        JsonObjectBuilder updateObjectBuilder = Json.createObjectBuilder();
+        JsonObject updated = updateObjectBuilder
+                .add("caption", "Implemented!")
+                .build();
+        client.target(location).request(MediaType.APPLICATION_JSON).put(Entity.json(updated));
+
+        // find again with GET {id}
+        JsonObject updatedTodo = client.target(location)
+                .request(MediaType.APPLICATION_JSON)
+                .get(JsonObject.class);
+
+        assertTrue(updatedTodo.getString("caption").contains("Implemented!"));
+
 
         // GET all
         Response response = target.request(MediaType.APPLICATION_JSON).get();
@@ -58,15 +73,15 @@ public class TodosResourceTest {
         assertFalse(allTodos.isEmpty());
 
         JsonObject todo = allTodos.getJsonObject(0);
-        assertThat(todo.getString("caption"), startsWith("Implement Rest Service"));
+        assertThat(todo.getString("caption"), startsWith("Implement"));
         System.out.println(todo);
 
+        // DELETE non existing object
         Response deleteResponse = target.
                 path("42").
                 request(MediaType.APPLICATION_JSON)
                 .delete();
 
-        // DELETE
         assertThat(deleteResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
     }
 }

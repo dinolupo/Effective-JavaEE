@@ -456,6 +456,8 @@ we should return 201 and a Location header instead of void (No Content). So let'
     }
 ```
 
+### 11.Testing The POST Location Header
+
 3) Adjust the test accordingly:
 
 ```java
@@ -516,3 +518,19 @@ we should return 201 and a Location header instead of void (No Content). So let'
     }
 ```
  
+### 12.ToDo Entity Updates
+
+Let's add a PUT method to permit an update of an entity:
+
+```java
+    @PUT
+    @Path("{id}")
+    public void update(@PathParam("id") long id, ToDo todo) {
+        todo.setId(id);
+        todosManager.save(todo);
+    }
+```
+
+as you can see, we used the id parameter to set the Entity id.
+
+

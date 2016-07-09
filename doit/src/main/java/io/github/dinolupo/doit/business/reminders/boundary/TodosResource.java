@@ -30,6 +30,13 @@ public class TodosResource {
         todosManager.delete(id);
     }
 
+    @PUT
+    @Path("{id}")
+    public void update(@PathParam("id") long id, ToDo todo) {
+        todo.setId(id);
+        todosManager.save(todo);
+    }
+
     @GET
     public List<ToDo> all() {
         return todosManager.findAll();

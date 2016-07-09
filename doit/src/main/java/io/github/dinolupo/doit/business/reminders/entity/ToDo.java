@@ -53,4 +53,8 @@ public class ToDo {
     public int getPriority() {
         return priority;
     }
+
+    public void setId(long id) {
+        this.id = id;
+    }
 }
