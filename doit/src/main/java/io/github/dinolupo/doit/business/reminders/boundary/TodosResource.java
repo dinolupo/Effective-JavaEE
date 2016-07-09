@@ -5,7 +5,10 @@ import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import java.util.ArrayList;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.List;
 
 @Stateless
@@ -33,7 +36,11 @@ public class TodosResource {
     }
 
     @POST
-    public void save(ToDo todo) {
-        todosManager.save(todo);
+    public Response save(ToDo todo, @Context UriInfo uriInfo) {
+        ToDo savedObject = todosManager.save(todo);
+        long id = savedObject.getId();
+        URI uri = uriInfo.getAbsolutePathBuilder().path("/" + id).build();
+        Response response = Response.created(uri).build();
+        return response;
     }
 }

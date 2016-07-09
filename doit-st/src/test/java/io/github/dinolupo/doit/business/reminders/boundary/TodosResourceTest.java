@@ -31,6 +31,7 @@ public class TodosResourceTest {
     @Test
     public void crud() throws Exception {
 
+        // create an object with POST
         JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         JsonObject todoToCreate = jsonObjectBuilder
                 .add("caption", "Implement Rest Service with JPA")
@@ -38,7 +39,17 @@ public class TodosResourceTest {
                 .add("priority", 100).build();
 
         Response postResponse = target.request().post(Entity.json(todoToCreate));
-        assertThat(postResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.CREATED));
+
+        String location = postResponse.getHeaderString("Location");
+        System.out.printf("location = %s\n", location);
+
+        // GET with id, using the location returned before
+        JsonObject jsonObject = client.target(location)
+                .request(MediaType.APPLICATION_JSON)
+                .get(JsonObject.class);
+
+        assertTrue(jsonObject.getString("caption").contains("Implement Rest Service with JPA"));
 
         // GET all
         Response response = target.request(MediaType.APPLICATION_JSON).get();
@@ -50,14 +61,6 @@ public class TodosResourceTest {
         assertThat(todo.getString("caption"), startsWith("Implement Rest Service"));
         System.out.println(todo);
 
-        // GET with id
-        JsonObject jsonObject = target.
-                path("1").
-                request(MediaType.APPLICATION_JSON).
-                get(JsonObject.class);
-
-        assertTrue(jsonObject.getString("caption").contains("42"));
-
         Response deleteResponse = target.
                 path("42").
                 request(MediaType.APPLICATION_JSON)
@@ -65,6 +68,5 @@ public class TodosResourceTest {
 
         // DELETE
         assertThat(deleteResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
-
     }
 }

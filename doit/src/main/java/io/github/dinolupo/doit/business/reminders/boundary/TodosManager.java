@@ -4,8 +4,8 @@ import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,8 +23,12 @@ public class TodosManager {
 
 
     public void delete(long id) {
-        ToDo reference = entityManager.getReference(ToDo.class, id);
-        entityManager.remove(reference);
+        try {
+            ToDo reference = entityManager.getReference(ToDo.class, id);
+            entityManager.remove(reference);
+        } catch (EntityNotFoundException ex) {
+            // we want to remove it, so do not care of the exception
+        }
     }
 
 
@@ -32,7 +36,8 @@ public class TodosManager {
         return entityManager.createNamedQuery(ToDo.findAll, ToDo.class).getResultList();
     }
 
-    public void save(ToDo todo) {
-        entityManager.merge(todo);
+    public ToDo save(ToDo todo) {
+        ToDo merge = entityManager.merge(todo);
+        return merge;
     }
 }

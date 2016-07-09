@@ -430,3 +430,89 @@ public class TodosManager {
 }
 ```
 
+### 10.Fixing The HTTP POST Implementation
+
+As stated by the HTTP RFC at [https://tools.ietf.org/html/rfc2616#page-54]() that says:
+
+_If a resource has been created on the origin server, the response
+   SHOULD be 201 (Created) and contain an entity which describes the
+   status of the request and refers to the new resource, and a Location
+   header_
+
+we should return 201 and a Location header instead of void (No Content). So let's adjust the POST method as follows:
+
+1) generate getters in the `ToDo` bean
+
+2) change `save` method such that it returns the `ToDo` saved object
+
+```java
+@POST
+    public Response save(ToDo todo, @Context UriInfo uriInfo) {
+        ToDo savedObject = todosManager.save(todo);
+        long id = savedObject.getId();
+        URI uri = uriInfo.getAbsolutePathBuilder().path("/" + id).build();
+        Response response = Response.created(uri).build();
+        return response;
+    }
+```
+
+3) Adjust the test accordingly:
+
+```java
+   @Test
+    public void crud() throws Exception {
+
+        // create an object with POST
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObject todoToCreate = jsonObjectBuilder
+                .add("caption", "Implement Rest Service with JPA")
+                .add("description", "Connect a JPA Entity Manager")
+                .add("priority", 100).build();
+
+        Response postResponse = target.request().post(Entity.json(todoToCreate));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.CREATED));
+
+        String location = postResponse.getHeaderString("Location");
+        System.out.printf("location = %s\n", location);
+
+        // GET with id, using the location returned before
+        JsonObject jsonObject = client.target(location)
+                .request(MediaType.APPLICATION_JSON)
+                .get(JsonObject.class);
+
+        assertTrue(jsonObject.getString("caption").contains("Implement Rest Service with JPA"));
+
+        // GET all
+        Response response = target.request(MediaType.APPLICATION_JSON).get();
+        assertThat(response.getStatusInfo(),is(Response.Status.OK));
+        JsonArray allTodos = response.readEntity(JsonArray.class);
+        assertFalse(allTodos.isEmpty());
+
+        JsonObject todo = allTodos.getJsonObject(0);
+        assertThat(todo.getString("caption"), startsWith("Implement Rest Service"));
+        System.out.println(todo);
+
+		 // DELETE
+        Response deleteResponse = target.
+                path("42").
+                request(MediaType.APPLICATION_JSON)
+                .delete();
+
+        
+        assertThat(deleteResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
+    }
+```
+
+4) paying attention to the fact that the delete method could raise an unchecked exception `EntityNotFoundException` when you try to delete a proxied non-existent object, so we adjust like the following:
+
+```java
+    public void delete(long id) {
+        try {
+            ToDo reference = entityManager.getReference(ToDo.class, id);
+            entityManager.remove(reference);
+        } catch (EntityNotFoundException ex) {
+            // we want to remove it, so do not care of the exception
+        }
+    }
+```
+ 
