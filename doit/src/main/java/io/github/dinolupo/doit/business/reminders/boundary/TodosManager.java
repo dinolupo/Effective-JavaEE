@@ -31,6 +31,11 @@ public class TodosManager {
         }
     }
 
+    public ToDo updateStatus(long id, boolean done) {
+        ToDo todo = findById(id);
+        todo.setDone(done);
+        return todo;
+    }
 
     public List<ToDo> findAll() {
         return entityManager.createNamedQuery(ToDo.findAll, ToDo.class).getResultList();

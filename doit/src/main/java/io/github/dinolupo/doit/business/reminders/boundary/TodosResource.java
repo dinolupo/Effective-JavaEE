@@ -1,9 +1,11 @@
 package io.github.dinolupo.doit.business.reminders.boundary;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.json.JsonObject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -35,6 +37,13 @@ public class TodosResource {
     public void update(@PathParam("id") long id, ToDo todo) {
         todo.setId(id);
         todosManager.save(todo);
+    }
+
+    @PUT
+    @Path("{id}/status")
+    public ToDo statusUpdate(@PathParam("id") long id, JsonObject status) {
+        boolean isDone = status.getBoolean("done");
+        return todosManager.updateStatus(id, isDone);
     }
 
     @GET

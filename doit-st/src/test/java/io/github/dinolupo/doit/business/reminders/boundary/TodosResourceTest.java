@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.json.*;
+import javax.print.attribute.standard.Media;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -62,9 +63,24 @@ public class TodosResourceTest {
         JsonObject updatedTodo = client.target(location)
                 .request(MediaType.APPLICATION_JSON)
                 .get(JsonObject.class);
-
         assertTrue(updatedTodo.getString("caption").contains("Implemented!"));
 
+        // update status ("done" field) with a subresource PUT method
+        JsonObjectBuilder statusBuilder = Json.createObjectBuilder();
+        JsonObject status = statusBuilder
+                .add("done", true)
+                .build();
+        client.target(location)
+                .path("status")
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.json(status));
+
+        // verify that status is updated
+        // find again with GET {id}
+        updatedTodo = client.target(location)
+                .request(MediaType.APPLICATION_JSON)
+                .get(JsonObject.class);
+        assertThat(updatedTodo.getBoolean("done"), is(true));
 
         // GET all
         Response response = target.request(MediaType.APPLICATION_JSON).get();

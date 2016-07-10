@@ -533,4 +533,66 @@ Let's add a PUT method to permit an update of an entity:
 
 as you can see, we used the id parameter to set the Entity id.
 
+### 13.Implementing Status Updates
+
+Here we add a new rest service that is needed to update only a field. We add a field "done", that represent if an activity is done, to the entity and we want to update only that field.
+
+We could do it using the PUT method, but it can be dangerous because we want only to update a field, so we introduce a sub-resource that can be used to update only some fields.
+
+1) add the `boolean done;` field to the Entity
+
+2) Implement the test (test first, TDD)
+
+```java
+public void crud() throws Exception {
+
+		...
+		
+        // update status ("done" field) with a subresource PUT method
+        JsonObjectBuilder statusBuilder = Json.createObjectBuilder();
+        JsonObject status = statusBuilder
+                .add("done", true)
+                .build();
+        client.target(location)
+                .path("status")
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.json(status));
+
+        // verify that status is updated
+        // find again with GET {id}
+        updatedTodo = client.target(location)
+                .request(MediaType.APPLICATION_JSON)
+                .get(JsonObject.class);
+        assertThat(updatedTodo.getBoolean("done"), is(true));
+        
+        ...
+}        
+```
+
+3) Implement the method to satisfy the test
+
+> add the following business method to `TodoManager.java`
+
+```java
+    public ToDo updateStatus(long id, boolean done) {
+        ToDo todo = findById(id);
+        todo.setDone(done);
+        return todo;
+    }
+```
+
+> add the following rest service to `TodosResource.java`
+
+```java
+    @PUT
+    @Path("{id}/status")
+    public ToDo statusUpdate(@PathParam("id") long id, JsonObject status) {
+        boolean isDone = status.getBoolean("done");
+        return todosManager.updateStatus(id, isDone);
+    }
+```
+
+
+
+
 
