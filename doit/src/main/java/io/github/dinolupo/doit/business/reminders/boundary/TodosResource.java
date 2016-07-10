@@ -41,9 +41,21 @@ public class TodosResource {
 
     @PUT
     @Path("{id}/status")
-    public ToDo statusUpdate(@PathParam("id") long id, JsonObject status) {
+    public Response statusUpdate(@PathParam("id") long id, JsonObject status) {
+        if (!status.containsKey("done")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","JSON does not contain required key 'done'")
+                    .build();
+        }
         boolean isDone = status.getBoolean("done");
-        return todosManager.updateStatus(id, isDone);
+        ToDo todo = todosManager.updateStatus(id, isDone);
+        if (todo == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","ToDo with id " + id + " does not exist.")
+                    .build();
+        } else {
+            return Response.ok(todo).build();
+        }
     }
 
     @GET

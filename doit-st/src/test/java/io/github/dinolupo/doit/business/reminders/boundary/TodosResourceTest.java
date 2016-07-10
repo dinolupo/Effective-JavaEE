@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.json.*;
-import javax.print.attribute.standard.Media;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -76,14 +75,38 @@ public class TodosResourceTest {
                 .put(Entity.json(status));
 
         // verify that status is updated
-        // find again with GET {id}
         updatedTodo = client.target(location)
                 .request(MediaType.APPLICATION_JSON)
                 .get(JsonObject.class);
         assertThat(updatedTodo.getBoolean("done"), is(true));
 
+        // update status on not existing object
+        JsonObjectBuilder notExistingBuilder = Json.createObjectBuilder();
+        status = notExistingBuilder
+                .add("done", true)
+                .build();
+        Response response = target.path("-42")
+                .path("status")
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.json(status));
+        assertThat(response.getStatusInfo(), is(Response.Status.BAD_REQUEST));
+        assertFalse(response.getHeaderString("reason").isEmpty());
+
+        // update with malformed status
+        JsonObjectBuilder malformedBuilder = Json.createObjectBuilder();
+        status = malformedBuilder
+                .add("something wrong", true)
+                .build();
+        response = client.target(location)
+                .path("status")
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.json(status));
+        assertThat(response.getStatusInfo(), is(Response.Status.BAD_REQUEST));
+        assertFalse(response.getHeaderString("reason").isEmpty());
+
+
         // GET all
-        Response response = target.request(MediaType.APPLICATION_JSON).get();
+        response = target.request(MediaType.APPLICATION_JSON).get();
         assertThat(response.getStatusInfo(),is(Response.Status.OK));
         JsonArray allTodos = response.readEntity(JsonArray.class);
         assertFalse(allTodos.isEmpty());

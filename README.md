@@ -592,7 +592,96 @@ public void crud() throws Exception {
     }
 ```
 
+### 14.Dealing With Exceptions And Status Codes
 
+We are going to show hot to deal with Exceptions in rest services.
 
+In the previous example we could have two `NullPointerException` in the following code:
 
+> in `TodoManager.updateStatus()`, `todo` can be null
+
+```java
+   todo.setDone(done);
+```
+
+> in `TodosResource.statusUpdate()`, `status` can be null
+
+```java
+	boolean isDone = status.getBoolean("done");
+```
+
+to test those cases, let's proceed to update the test class:
+
+> test the case of non existing object:
+
+```java
+	     // update status on not existing object
+        JsonObjectBuilder notExistingBuilder = Json.createObjectBuilder();
+        status = notExistingBuilder
+                .add("done", true)
+                .build();
+        Response response = target.path("-42")
+                .path("status")
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.json(status));
+        assertThat(response.getStatusInfo(), is(Response.Status.BAD_REQUEST));
+        assertFalse(response.getHeaderString("reason").isEmpty());
+```
+
+> adjust the code to pass the test:
+
+```java
+    @PUT
+    @Path("{id}/status")
+    public Response statusUpdate(@PathParam("id") long id, JsonObject status) {
+        boolean isDone = status.getBoolean("done");
+        ToDo todo = todosManager.updateStatus(id, isDone);
+        if (todo == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","ToDo with id " + id + " does not exist.")
+                    .build();
+        } else {
+            return Response.ok(todo).build();
+        }
+    }
+```
+
+> test the code of malformed json
+
+```java
+        // update with malformed status
+        JsonObjectBuilder malformedBuilder = Json.createObjectBuilder();
+        status = malformedBuilder
+                .add("something wrong", true)
+                .build();
+        response = client.target(location)
+                .path("status")
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.json(status));
+        assertThat(response.getStatusInfo(), is(Response.Status.BAD_REQUEST));
+        assertFalse(response.getHeaderString("reason").isEmpty());
+```
+
+> correct the code accordingly
+
+```java
+    @PUT
+    @Path("{id}/status")
+    public Response statusUpdate(@PathParam("id") long id, JsonObject status) {
+        if (!status.containsKey("done")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","JSON does not contain required key 'done'")
+                    .build();
+        }
+        boolean isDone = status.getBoolean("done");
+        ToDo todo = todosManager.updateStatus(id, isDone);
+        if (todo == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","ToDo with id " + id + " does not exist.")
+                    .build();
+        } else {
+            return Response.ok(todo).build();
+        }
+    }
+```
 

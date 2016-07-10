@@ -33,6 +33,9 @@ public class TodosManager {
 
     public ToDo updateStatus(long id, boolean done) {
         ToDo todo = findById(id);
+        if (todo == null) {
+            return null;
+        }
         todo.setDone(done);
         return todo;
     }
