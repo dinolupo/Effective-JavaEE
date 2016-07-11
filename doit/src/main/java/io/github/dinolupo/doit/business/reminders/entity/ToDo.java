@@ -1,6 +1,8 @@
 package io.github.dinolupo.doit.business.reminders.entity;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -22,6 +24,8 @@ public class ToDo {
     @GeneratedValue
     long id;
 
+    @NotNull
+    @Size(min = 1, max = 256)
     private String caption;
     private String description;
     private int priority;

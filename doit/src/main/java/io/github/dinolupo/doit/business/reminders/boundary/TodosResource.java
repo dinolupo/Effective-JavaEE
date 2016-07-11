@@ -6,6 +6,7 @@ import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.json.JsonObject;
+import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -31,7 +32,7 @@ public class TodosResource {
     }
 
     @POST
-    public Response save(ToDo todo, @Context UriInfo uriInfo) {
+    public Response save(@Valid ToDo todo, @Context UriInfo uriInfo) {
         ToDo savedObject = todosManager.save(todo);
         long id = savedObject.getId();
         URI uri = uriInfo.getAbsolutePathBuilder().path("/" + id).build();

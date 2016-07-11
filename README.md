@@ -152,7 +152,8 @@ Create a simple Maven project with the following pom.xml:
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
-</project>```
+</project>
+```
 
 The test class is the following:
 
@@ -805,3 +806,53 @@ public class EJBExceptionMapper implements ExceptionMapper<EJBException>{
 
 Conflict is the correct status code to return in this case as stated by the http RFC.
 
+### 18.JAX-RS And Bean Validation
+
+To demonstrate validation we put the following in the `ToDo` class:
+
+```java
+    @NotNull
+    @Size(min = 1, max = 256)
+    private String caption;
+``` 
+
+and to validate the bean before it reaches the persistence context add `@Valid` to the rest method:
+
+```java
+    ...
+    @POST
+    public Response save(@Valid ToDo todo, @Context UriInfo uriInfo) {
+    ...
+    }
+```
+
+Test both cases:
+
+```java
+    @Test
+    public void createNotValidTodo() {
+        // create an object with POST with missing "caption" field
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObject todoToCreate = jsonObjectBuilder
+                .add("description", "Connect a JPA Entity Manager")
+                .add("priority", 100).build();
+
+        Response postResponse = target.request().post(Entity.json(todoToCreate));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.BAD_REQUEST));
+    }
+
+    @Test
+    public void createValidTodo() {
+        // create an object with POST with missing "caption" field
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObject todoToCreate = jsonObjectBuilder
+                .add("caption", "valid caption")
+                .add("description", "Connect a JPA Entity Manager")
+                .add("priority", 100).build();
+
+        Response postResponse = target.request().post(Entity.json(todoToCreate));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.CREATED));
+    }
+```
+
+ 

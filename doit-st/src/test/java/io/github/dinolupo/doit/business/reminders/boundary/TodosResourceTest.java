@@ -134,4 +134,33 @@ public class TodosResourceTest {
 
         assertThat(deleteResponse.getStatusInfo(),is(Response.Status.NO_CONTENT));
     }
+
+    @Test
+    public void createNotValidTodo() {
+        // create an object with POST with missing "caption" field
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObject todoToCreate = jsonObjectBuilder
+                .add("description", "Connect a JPA Entity Manager")
+                .add("priority", 100).build();
+
+        Response postResponse = target.request().post(Entity.json(todoToCreate));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.BAD_REQUEST));
+    }
+
+    @Test
+    public void createValidTodo() {
+        // create an object with POST with missing "caption" field
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObject todoToCreate = jsonObjectBuilder
+                .add("caption", "valid caption")
+                .add("description", "Connect a JPA Entity Manager")
+                .add("priority", 100).build();
+
+        Response postResponse = target.request().post(Entity.json(todoToCreate));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.CREATED));
+    }
+
+
+
+
 }
