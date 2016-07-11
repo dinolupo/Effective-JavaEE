@@ -56,7 +56,16 @@ public class TodosResourceTest {
         JsonObject updated = updateObjectBuilder
                 .add("caption", "Implemented!")
                 .build();
-        client.target(location).request(MediaType.APPLICATION_JSON).put(Entity.json(updated));
+        Response updateResponse = client.target(location).request(MediaType.APPLICATION_JSON).put(Entity.json(updated));
+        assertThat(updateResponse.getStatusInfo(), is(Response.Status.NO_CONTENT));
+
+        // update again to verify Optimistick Lock exception
+        updateObjectBuilder = Json.createObjectBuilder();
+        updated = updateObjectBuilder
+                .add("priority", 100)
+                .build();
+        updateResponse = client.target(location).request(MediaType.APPLICATION_JSON).put(Entity.json(updated));
+        assertThat(updateResponse.getStatusInfo(), is(Response.Status.NO_CONTENT));
 
         // find again with GET {id}
         JsonObject updatedTodo = client.target(location)

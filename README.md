@@ -753,3 +753,22 @@ The new `{id}` path method in the original `TodosResource` class will become:
 
 When executing a path like `/todos/{id}` the JAX-RS engine will enter the `TodosResource` and will hit the previous modified method, so it will return a new `TodoResource` the will execute one of the provided HTTP verb present in that class. 
 
+### 16.Implementing Optimistic Locking
+
+If you want to update a single resource from different clients without risking to overwrite previous values, we could implement an optimistick lock.
+
+To implement optimistick locking we have to introduce a field into the `ToDo` bean:
+
+```java
+@Version
+private long version;
+```
+
+The JPA manager will update that field every time an object is updated. If you try to update an object with the same `@Version` field multiple times, you will get an Exception and a Rollback:
+
+Hibernate will generate a `org.hibernate.StaleObjectStateException` 
+that JPA will catch in a `javax.persistence.OptimisticLockException`
+that follows in a `javax.ejb.EJBException` that generates a Rollback of the entire transaction.
+
+To verify the problem, let's try to update a single resource two times in the test case, without reading again the bean, the version isn't changed and there is a 500 http response (the EJB exception generates it).
+
