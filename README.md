@@ -685,3 +685,71 @@ to test those cases, let's proceed to update the test class:
     }
 ```
 
+### 15.Introducing Standalone JAX-RS Resource
+
+In this step we basically refator the `TodosResource` class creating a new `TodoResource` that manages only basic operation on a single `ToDo` instance, given the **id** parameter. 
+
+Let's see the class here:
+
+```java
+public class TodoResource {
+
+    long id;
+    TodosManager todosManager;
+
+    public TodoResource(long id, TodosManager todosManager) {
+        this.id = id;
+        this.todosManager = todosManager;
+    }
+
+    @GET
+    public ToDo find(){
+        return todosManager.findById(id);
+    }
+
+
+    @DELETE
+    public void delete() {
+        todosManager.delete(id);
+    }
+
+    @PUT
+    public void update(ToDo todo) {
+        todo.setId(id);
+        todosManager.save(todo);
+    }
+
+    @PUT
+    @Path("/status")
+    public Response statusUpdate(JsonObject status) {
+        if (!status.containsKey("done")) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","JSON does not contain required key 'done'")
+                    .build();
+        }
+        boolean isDone = status.getBoolean("done");
+        ToDo todo = todosManager.updateStatus(id, isDone);
+        if (todo == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("reason","ToDo with id " + id + " does not exist.")
+                    .build();
+        } else {
+            return Response.ok(todo).build();
+        }
+    }
+}
+```
+
+We have moved all the `{id}` related operations, leaving only the` findAll` and the `save` method. 
+
+The new `{id}` path method in the original `TodosResource` class will become:
+
+```java
+	@Path("{id}")
+   public TodoResource find(@PathParam("id") long id){
+        return new TodoResource(id, todosManager);
+   }
+```
+
+When executing a path like `/todos/{id}` the JAX-RS engine will enter the `TodosResource` and will hit the previous modified method, so it will return a new `TodoResource` the will execute one of the provided HTTP verb present in that class. 
+

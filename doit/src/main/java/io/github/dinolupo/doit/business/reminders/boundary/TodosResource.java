@@ -20,42 +20,9 @@ public class TodosResource {
     @Inject
     TodosManager todosManager;
 
-    @GET
     @Path("{id}")
-    public ToDo find(@PathParam("id") long id){
-        return todosManager.findById(id);
-    }
-
-    @DELETE
-    @Path("{id}")
-    public void delete(@PathParam("id") long id) {
-        todosManager.delete(id);
-    }
-
-    @PUT
-    @Path("{id}")
-    public void update(@PathParam("id") long id, ToDo todo) {
-        todo.setId(id);
-        todosManager.save(todo);
-    }
-
-    @PUT
-    @Path("{id}/status")
-    public Response statusUpdate(@PathParam("id") long id, JsonObject status) {
-        if (!status.containsKey("done")) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .header("reason","JSON does not contain required key 'done'")
-                    .build();
-        }
-        boolean isDone = status.getBoolean("done");
-        ToDo todo = todosManager.updateStatus(id, isDone);
-        if (todo == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .header("reason","ToDo with id " + id + " does not exist.")
-                    .build();
-        } else {
-            return Response.ok(todo).build();
-        }
+    public TodoResource find(@PathParam("id") long id){
+        return new TodoResource(id, todosManager);
     }
 
     @GET
