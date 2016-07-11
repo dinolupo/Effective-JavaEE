@@ -772,3 +772,36 @@ that follows in a `javax.ejb.EJBException` that generates a Rollback of the enti
 
 To verify the problem, let's try to update a single resource two times in the test case, without reading again the bean, the version isn't changed and there is a 500 http response (the EJB exception generates it).
 
+### 17.Exception Mappers and Status 409
+
+To return a more meaningful http response code we could map exceptions using an ExceptionMapper:
+
+```java
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+@Provider
+public class EJBExceptionMapper implements ExceptionMapper<EJBException>{
+    @Override
+    public Response toResponse(EJBException exception) {
+        Throwable cause = exception.getCause();
+        Response unknownError = Response.serverError()
+                .header("cause", exception.toString())
+                .build();
+        if (cause == null) {
+            return unknownError;
+        }
+
+        if (cause instanceof OptimisticLockException) {
+            return Response.status(Response.Status.CONFLICT)
+                    .header("cause", "conflict occurred: " + cause)
+                    .build();
+        }
+
+        return unknownError;
+    }
+}
+```
+
+Conflict is the correct status code to return in this case as stated by the http RFC.
+

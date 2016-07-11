@@ -65,7 +65,9 @@ public class TodosResourceTest {
                 .add("priority", 100)
                 .build();
         updateResponse = client.target(location).request(MediaType.APPLICATION_JSON).put(Entity.json(updated));
-        assertThat(updateResponse.getStatusInfo(), is(Response.Status.NO_CONTENT));
+        assertThat(updateResponse.getStatusInfo(), is(Response.Status.CONFLICT));
+        assertTrue(updateResponse.getHeaderString("cause").startsWith("conflict occurred:"));
+
 
         // find again with GET {id}
         JsonObject updatedTodo = client.target(location)
