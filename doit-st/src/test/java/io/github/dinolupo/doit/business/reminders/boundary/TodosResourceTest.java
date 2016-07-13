@@ -141,7 +141,7 @@ public class TodosResourceTest {
         JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         JsonObject todoToCreate = jsonObjectBuilder
                 .add("description", "Connect a JPA Entity Manager")
-                .add("priority", 100).build();
+                .add("priority", 10).build();
 
         Response postResponse = target.request().post(Entity.json(todoToCreate));
         assertThat(postResponse.getStatusInfo(),is(Response.Status.BAD_REQUEST));
@@ -149,16 +149,28 @@ public class TodosResourceTest {
 
     @Test
     public void createValidTodo() {
-        // create an object with POST with missing "caption" field
+        // create an object with POST with "caption" field
         JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         JsonObject todoToCreate = jsonObjectBuilder
                 .add("caption", "valid caption")
-                .add("description", "Connect a JPA Entity Manager")
-                .add("priority", 100).build();
+                .add("priority", 9).build();
 
         Response postResponse = target.request().post(Entity.json(todoToCreate));
         assertThat(postResponse.getStatusInfo(),is(Response.Status.CREATED));
     }
+
+    @Test
+    public void createTodoWithHighPriorityWithoutDescription() {
+        // create an object with POST with high priority and missing "description" field
+        JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        JsonObject todoToCreate = jsonObjectBuilder
+                .add("caption", "no description")
+                .add("priority", 11).build();
+
+        Response postResponse = target.request().post(Entity.json(todoToCreate));
+        assertThat(postResponse.getStatusInfo(),is(Response.Status.BAD_REQUEST));
+    }
+
 
 
 

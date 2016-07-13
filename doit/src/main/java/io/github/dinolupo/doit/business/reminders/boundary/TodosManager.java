@@ -14,7 +14,7 @@ import java.util.List;
 @Stateless
 public class TodosManager {
 
-    @PersistenceContext
+    @PersistenceContext(unitName = "production")
     EntityManager entityManager;
 
     public ToDo findById(long id) {

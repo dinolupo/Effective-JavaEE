@@ -1,5 +1,9 @@
 package io.github.dinolupo.doit.business.reminders.entity;
 
+
+import io.github.dinolupo.doit.business.CrossCheck;
+import io.github.dinolupo.doit.business.ValidEntity;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -14,7 +18,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQuery(name = ToDo.findAll, query = "SELECT t FROM ToDo t")
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ToDo {
+@CrossCheck
+public class ToDo implements ValidEntity {
 
     final static String PREFIX = "reminders.entity.";
     public final static String findAll = PREFIX + "findAll";
@@ -69,5 +74,10 @@ public class ToDo {
 
     public void setDone(boolean done) {
         this.done = done;
+    }
+
+    @Override
+    public boolean isValid() {
+        return (priority > 10 && description != null) || priority <= 10;
     }
 }

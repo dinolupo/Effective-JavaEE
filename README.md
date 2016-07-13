@@ -855,4 +855,100 @@ Test both cases:
     }
 ```
 
- 
+### 19.Cross Field Validation
+
+Let's suppose we want to introduce a more complicated validation, for example we want that a ToDo has to have a description not null if a priority is higher than 10. We are going to show one method to do that:
+
+1) Let's implement an interface in the business layer that is called `ValidEntity`
+
+```java
+public interface ValidEntity {
+    public boolean isValid();
+}
+```
+
+2) Our `ToDo` bean should implement the interface:
+
+```java
+public class ToDo implements ValidEntity {
+...
+
+    @Override
+    public boolean isValid() {
+        return (priority > 10 && description != null) || priority <= 10;
+    }
+
+
+}
+```
+
+3) We can create unit tests for the bean like the following (unit tests can go in the same business project `doit`, while we mantain integration tests in the other `doit-st` project):
+
+```java
+public class ToDoTest {
+    @Test
+    public void valid() {
+        ToDo toDo = new ToDo("", "description", 11);
+        assertTrue(toDo.isValid());
+    }
+
+    @Test
+    public void notValid() {
+        ToDo toDo = new ToDo("", null, 11);
+        assertFalse(toDo.isValid());
+    }
+}
+```
+
+4) Now we can create a reusable ConstraintValidator class that will be used with an Annotation:
+
+> `CrossCheckConstraintValidator` - put this in the business package
+
+```java
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+
+public class CrossCheckConstraintValidator implements ConstraintValidator<CrossCheck, ValidEntity> {
+    @Override
+    public void initialize(CrossCheck constraintAnnotation) {
+    }
+
+    @Override
+    public boolean isValid(ValidEntity entity, ConstraintValidatorContext context) {
+        return entity.isValid();
+    }
+}
+```
+
+> `CrossCheck` annotation - put this in the business package
+
+```java
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import java.lang.annotation.*;
+
+@Documented
+@Constraint(validatedBy = CrossCheckConstraintValidator.class)
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CrossCheck {
+
+    String message() default "Cross check failed!";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+
+}
+```
+
+5) Now we can use the annotation to validate our `ToDo` bean:
+
+> put `CrossCheck` annotation to the bean that you want to validate during a transaction
+
+```java
+...
+@CrossCheck
+public class ToDo implements ValidEntity {...}
+```
+
+6) Deploy and add an integration test:
+
