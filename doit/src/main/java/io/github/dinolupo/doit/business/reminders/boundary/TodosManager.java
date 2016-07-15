@@ -1,8 +1,10 @@
 package io.github.dinolupo.doit.business.reminders.boundary;
 
+import io.github.dinolupo.doit.business.logging.boundary.BoundaryLogger;
 import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 
 import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -12,6 +14,7 @@ import java.util.List;
  * Created by dinolupo.github.io on 07/07/16.
  */
 @Stateless
+@Interceptors(BoundaryLogger.class)
 public class TodosManager {
 
     @PersistenceContext(unitName = "production")

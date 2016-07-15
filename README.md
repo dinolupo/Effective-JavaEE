@@ -950,5 +950,97 @@ public @interface CrossCheck {
 public class ToDo implements ValidEntity {...}
 ```
 
-6) Deploy and add an integration test:
+6) Deploy and add an integration test
+
+### 21.Logging And How To Deal With Cross Cutting Concerns
+
+We add an Interceptor to log all the calls to the methods of the TodosManager class
+
+1) Create an interceptor class:
+
+> create the interceptor class in the business package
+
+```java
+package io.github.dinolupo.doit.business;
+
+import javax.interceptor.AroundInvoke;
+import javax.interceptor.InvocationContext;
+
+public class BoundaryLogger {
+
+    @AroundInvoke
+    public Object logCall(InvocationContext invocationContext) throws Exception {
+        System.out.printf("--> %s\n", invocationContext.getMethod());
+        return invocationContext.proceed();
+    }
+}
+```
+
+2) add the annotation to the manager class
+
+> adding the annotation
+
+```java
+...
+@Interceptors(BoundaryLogger.class)
+public class TodosManager {...}
+```
+
+3) instead of the System.out line in the interceptor, we could be smarter and add a functional interface (we choose later what concrete class to inject) to collect all the logging
+
+> in the business package, create a new functional interface that specify what to do with log messages
+
+```java
+@FunctionalInterface
+public interface LogSink {
+    void log(String msg);
+}
+```
+
+4) change the `BoundaryLogger` as follows:
+
+> injecting the `LogSink` and use it
+
+```java
+public class BoundaryLogger {
+
+    @Inject
+    LogSink LOG;
+
+    @AroundInvoke
+    public Object logCall(InvocationContext invocationContext) throws Exception {
+        LOG.log("--> " + invocationContext.getMethod());
+        return invocationContext.proceed();
+    }
+}
+```
+
+5) Now to use that `LogSink` interface, someone has to produce a concrete class:
+
+> create a `LogSinkProducer` that returns the JDK log info method
+
+```java
+package io.github.dinolupo.doit.business;
+
+import io.github.dinolupo.doit.business.LogSink;
+
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.InjectionPoint;
+import java.util.logging.Logger;
+
+public class LogSinkProducer {
+
+    @Produces
+    public LogSink produce(InjectionPoint injectionPoint) {
+        Class<?> injectionTarget = injectionPoint.getMember().getDeclaringClass();
+        return Logger.getLogger(getClass().getName())::info;
+    }
+}
+```
+
+6) If the logging is a bunsiness requirement, than we can put the logging classes in a business package
+
+> refactor to put all the three logging classes into the correct package
+
+`package io.github.dinolupo.doit.business.logging.boundary;`
 
