@@ -12,7 +12,7 @@ public class LogSinkProducer {
     @Produces
     public LogSink produce(InjectionPoint injectionPoint) {
         Class<?> injectionTarget = injectionPoint.getMember().getDeclaringClass();
-        return Logger.getLogger(getClass().getName())::info;
+        return Logger.getLogger(injectionTarget.getName())::info;
     }
 
 }

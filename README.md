@@ -1033,7 +1033,7 @@ public class LogSinkProducer {
     @Produces
     public LogSink produce(InjectionPoint injectionPoint) {
         Class<?> injectionTarget = injectionPoint.getMember().getDeclaringClass();
-        return Logger.getLogger(getClass().getName())::info;
+        return Logger.getLogger(injectionTarget.getName())::info;
     }
 }
 ```
@@ -1043,4 +1043,94 @@ public class LogSinkProducer {
 > refactor to put all the three logging classes into the correct package
 
 `package io.github.dinolupo.doit.business.logging.boundary;`
+
+### 22.From Logging To Monitoring
+
+Let's capture the performance of the method:
+
+1) Let's create a class that is needed for our monitoring purpose
+
+> create a `CallEvent` class in the `business.monitoring.entity` package
+
+```java
+package io.github.dinolupo.doit.business.monitoring.entity;
+
+public class CallEvent {
+    private String methodName;
+    private long duration;
+
+    public CallEvent(String methodName, long duration) {
+        this.methodName = methodName;
+        this.duration = duration;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+    
+    @Override
+    public String toString() {
+        return "CallEvent{" +
+                "methodName='" + methodName + '\'' +
+                ", duration=" + duration +
+                '}';
+    }
+}
+```
+
+2) Let's modify the BoundaryLogger to fire an Enterprise Event of type CallEvent
+
+> remove the previous `@Inject` and modify the method to send an Enterpise Event with the duration of the method call
+
+```java
+public class BoundaryLogger {
+
+    @Inject
+    Event<CallEvent> monitoring;
+
+    @AroundInvoke
+    public Object logCall(InvocationContext invocationContext) throws Exception {
+        long start = System.currentTimeMillis();
+        try {
+            return invocationContext.proceed();
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            monitoring.fire(new CallEvent(invocationContext.getMethod().getName(),duration));
+        }
+    }
+}
+```
+
+3) Create a class that captures and processes that Event
+
+> use `@Observes` to process the Event, inject again the LogSink created before to show the output
+
+```java
+package io.github.dinolupo.doit.business.monitoring.boundary;
+
+import io.github.dinolupo.doit.business.logging.boundary.LogSink;
+import io.github.dinolupo.doit.business.monitoring.entity.CallEvent;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.Singleton;
+import javax.enterprise.event.Observes;
+import javax.inject.Inject;
+
+@Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+public class MonitoringSink {
+
+    @Inject
+    LogSink LOG;
+
+    public void onCallEvent(@Observes CallEvent callEvent) {
+        LOG.log(callEvent.toString());
+    }
+}
+```
+
 
