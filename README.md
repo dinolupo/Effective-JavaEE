@@ -1444,3 +1444,29 @@ public class Index {
     }
 ```
 
+### 28. HTML 5 with JSF
+
+Let's suppose we want to use HTML5 instead of xhtml markup.
+
+As an example let's substitute the caption field with an HTML5 field:
+
+> Old JSP markup Caption
+
+```html
+Caption: <h:inputText value="#{index.todo.caption}"/>
+```
+
+> New HTML5 Caption
+
+```html
+Caption: <input jsf:id="caption" 
+				type="text" 
+				placeholder="Enter the caption" 
+				value="#{index.todo.caption}"/>
+```
+
+With JEE7 it is very simple to transform a JSF element into an HTML5 page.
+
+This is a nice and pragmatic way to work with Designers because they release to programmers an HTML5 page and not a JSF page.
+
+ 
