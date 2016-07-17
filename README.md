@@ -1232,3 +1232,58 @@ Date: Sun, 17 Jul 2016 12:45:52 GMT
 
 5) to be more flexible, you could change the return type of the `expose()` method to `JsonArray` and format information as you like.
 
+### 24.Providing Statistics
+
+We could expose basic statistics in the following way:
+
+1) create the business method to calculate the statistics
+
+> in the `MonitoringSink` class add a method to expose a `LongSummaryStatistics` object 
+
+```java
+public class MonitoringSink {
+...
+    public LongSummaryStatistics getStatistics() {
+        return recentEvents.stream().collect(Collectors.summarizingLong(CallEvent::getDuration));
+    }
+...
+}
+```
+
+2) Expose the statistics with a new Resource class:
+
+> create a `BoundaryStatisticsResource` class that expose statistics with a JsonObject (no XML support when using a JsonObject)
+
+```java
+package io.github.dinolupo.doit.business.monitoring.boundary;
+
+import javax.inject.Inject;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import java.util.LongSummaryStatistics;
+
+@Path("boundary-statistics")
+public class BoundaryStatisticsResource {
+
+    @Inject
+    MonitoringSink monitoringSink;
+
+    @GET
+    public JsonObject get() {
+        LongSummaryStatistics statistics = monitoringSink.getStatistics();
+        JsonObject jsonStats = Json.createObjectBuilder()
+                .add("average-duration", statistics.getAverage())
+                .add("max-duration", statistics.getMax())
+                .add("min-duration", statistics.getMin())
+                .add("invocations-count", statistics.getCount())
+                .build();
+        return jsonStats;
+    }
+}
+```
+
+Statistics can be useful in an enterprise project when dealing with stress tests. Few project expose this type of statistics.
+
+

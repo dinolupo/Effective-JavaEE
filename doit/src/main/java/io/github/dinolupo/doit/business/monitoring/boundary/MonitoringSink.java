@@ -11,7 +11,9 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.xml.rpc.Call;
 import java.util.List;
+import java.util.LongSummaryStatistics;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * Created by dinolupo.github.io on 16/07/16.
@@ -39,4 +41,22 @@ public class MonitoringSink {
         return recentEvents;
     }
 
+    public LongSummaryStatistics getStatistics() {
+        return recentEvents.stream().collect(Collectors.summarizingLong(CallEvent::getDuration));
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
