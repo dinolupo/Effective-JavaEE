@@ -1286,4 +1286,107 @@ public class BoundaryStatisticsResource {
 
 Statistics can be useful in an enterprise project when dealing with stress tests. Few project expose this type of statistics.
 
+### 25.Simplistic JSF -- An Intro
+
+Let's create a presentation layer with JSF to show the application on the web:
+
+1) Create a web.xml file under the WEB-INF directory with the following content:
+
+> `web.xml` configuration file to work with JSF 
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+<context-param>
+    <param-name>javax.faces.PROJECT_STAGE</param-name>
+    <param-value>Development</param-value>
+</context-param>
+<servlet>
+    <servlet-name>Faces Servlet</servlet-name>
+    <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+</servlet>
+<servlet-mapping>
+    <servlet-name>Faces Servlet</servlet-name>
+    <url-pattern>/faces/*</url-pattern>
+</servlet-mapping>
+<session-config>
+    <session-timeout>
+        30
+    </session-timeout>
+</session-config>
+<welcome-file-list>
+    <welcome-file>faces/index.xhtml</welcome-file>
+</welcome-file-list>
+</web-app>
+```
+ 
+2) Let's create a simple JSF page
+
+> `index.xhtml` JSF web page
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Facelet Title</title>
+</h:head>
+<h:body>
+    <h:form>
+        Caption: <h:inputText value="#{index.todo.caption}"/>
+        Description: <h:inputText value="#{index.todo.description}"/>
+        Priority: <h:inputText value="#{index.todo.priority}"/>
+        <h:commandButton value="Save" action="#{index.save}"/>
+    </h:form>
+</h:body>
+</html>
+```
+
+3) We want to reuse the same business `ToDo` bean here, so let's add the __setters__ to it, otherwise you will get `PropertyNotWritableException` trying to save it:
+
+4) create a Model class that works together with the JSF Page just created
+
+> `Index` class
+
+```java
+ package io.github.dinolupo.doit.presentation;
+
+import io.github.dinolupo.doit.business.reminders.boundary.TodosManager;
+import io.github.dinolupo.doit.business.reminders.entity.ToDo;
+
+import javax.annotation.PostConstruct;
+import javax.enterprise.inject.Model;
+import javax.inject.Inject;
+
+@Model
+public class Index {
+
+    @Inject
+    TodosManager boundary;
+
+    ToDo todo;
+
+    @PostConstruct
+    public void init() {
+        todo = new ToDo();
+    }
+
+    public ToDo getTodo() {
+        return todo;
+    }
+
+    // JSF action
+    public Object save() {
+        this.boundary.save(todo);
+        // stay on the same page
+        return null;
+    }
+}
+```
+
 

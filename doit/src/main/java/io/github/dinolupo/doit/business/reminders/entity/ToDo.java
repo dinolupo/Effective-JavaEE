@@ -21,6 +21,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 @CrossCheck
 public class ToDo implements ValidEntity {
 
+    public void setCaption(String caption) {
+        this.caption = caption;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
     final static String PREFIX = "reminders.entity.";
     public final static String findAll = PREFIX + "findAll";
 
