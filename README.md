@@ -1133,4 +1133,102 @@ public class MonitoringSink {
 }
 ```
 
+### 23.Exposing Performance Metrics
+
+We want to expose the Events via a Rest interface:
+
+1) Add a structure to hold the Events and add every Event to it. For now we don't care about the the OutOfMemory Exception, we cover this topic later ;)
+
+> add a field `CopyOnWriteArrayList<CallEvent>` and add every event to this collection 
+
+```java
+public class MonitoringSink {
+
+    @Inject
+    private LogSink LOG;
+
+    private CopyOnWriteArrayList<CallEvent> recentEvents;
+
+    @PostConstruct
+    public void postConstruct() {
+        recentEvents = new CopyOnWriteArrayList<>();
+    }
+
+    public void onCallEvent(@Observes CallEvent callEvent) {
+        LOG.log(callEvent.toString());
+        recentEvents.add(callEvent);
+    }
+
+    public List<CallEvent> getRecentEvents() {
+        return recentEvents;
+    }
+}
+```
+
+2) modify the `CallEvent` to add a default constructor needed by JAX-RS and define the annotations to serialize the object:
+
+```java
+	@XmlRootElement
+	@XmlAccessorType(XmlAccessType.FIELD)
+	public class CallEvent {
+	...
+   		public CallEvent() {
+   		}
+   	...
+   }
+```
+
+3) In the `monitoring.boundary` package add a class to expose the list of events
+
+> new Resource to expose events via REST
+
+```java
+@Stateless
+@Path("boundary-invocations")
+public class BoundaryInvocationsResource {
+
+    @Inject
+    MonitoringSink monitoringSink;
+
+    @GET
+    public List<CallEvent> expose() {
+        return monitoringSink.getRecentEvents();
+    }
+}
+```
+
+4) run and then execute the tests to add some data. Then retrieve it with the following:
+
+> curl command
+
+```sh
+% curl -i -H "accept: application/json" http://localhost:8080/doit/api/boundary-invocations
+HTTP/1.1 200 OK
+Connection: keep-alive
+X-Powered-By: Undertow/1
+Server: WildFly/10
+Content-Type: application/json
+Content-Length: 423
+Date: Sun, 17 Jul 2016 12:45:52 GMT
+```
+
+> shell output
+
+```json
+
+[	{"methodName":"save","duration":118},
+	{"methodName":"findById","duration":14},
+	{"methodName":"save","duration":2},
+	{"methodName":"save","duration":3},
+	{"methodName":"findById","duration":1},
+	{"methodName":"updateStatus","duration":1},
+	{"methodName":"findById","duration":2},
+	{"methodName":"updateStatus","duration":1},
+	{"methodName":"findAll","duration":15},
+	{"methodName":"delete","duration":7},
+	{"methodName":"save","duration":3}
+]
+```
+
+5) to be more flexible, you could change the return type of the `expose()` method to `JsonArray` and format information as you like.
 
