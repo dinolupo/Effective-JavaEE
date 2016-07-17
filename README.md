@@ -1389,4 +1389,58 @@ public class Index {
 }
 ```
 
+### 27.Cross Field Validation with JSF
+
+To try this example, firs fix the ToDo `isValid()` method adding the isEmpty() case as follows:
+
+```java
+    @Override
+    public boolean isValid() {
+        return (priority > 10 && description != null && !description.isEmpty()) 
+        		|| priority <= 10;
+    }
+```
+
+Validation on `ToDo` fields works out of the box with JSF, while Cross-Field validation with the `CrossCheck` annotation is not intercepted by JSF (because our jsf page bind fields and not the object) but only by JPA. So if you test the application with no description and priority > 10 you will get an Exception page.
+
+To fix this, let's do the following steps:
+
+1) Add a utility method to the Managed Bean, that prints a validation message to the page:
+
+```java
+    public void showValidationError(String content) {
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_WARN, content, content);
+        FacesContext.getCurrentInstance().addMessage("", message);
+    }
+```
+
+2) Inject the `javax.validation.Validator` into the `Index` Managed Bean:
+
+```java
+import javax.validation.Validator;
+...
+public class Index {
+    ...
+    @Inject
+    Validator validator;
+    ...
+}
+```
+
+3) Adapt the `save()` to verify validation violations:
+
+```java
+  // JSF action
+    public Object save() {
+        Set<ConstraintViolation<ToDo>> violations = validator.validate(todo);
+        for (ConstraintViolation<ToDo> violation : violations) {
+            showValidationError(violation.getMessage());
+        }
+        if (violations.isEmpty()) {
+            this.boundary.save(todo);
+        }
+        // stay on the same page
+        return null;
+    }
+```
 

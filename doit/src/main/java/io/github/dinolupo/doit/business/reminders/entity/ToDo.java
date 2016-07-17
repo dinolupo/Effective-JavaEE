@@ -42,7 +42,7 @@ public class ToDo implements ValidEntity {
     long id;
 
     @NotNull
-    @Size(min = 1, max = 256)
+    @Size(min = 3, max = 256)
     private String caption;
     private String description;
     private int priority;
@@ -90,6 +90,6 @@ public class ToDo implements ValidEntity {
 
     @Override
     public boolean isValid() {
-        return (priority > 10 && description != null) || priority <= 10;
+        return (priority > 10 && description != null && !description.isEmpty()) || priority <= 10;
     }
 }
