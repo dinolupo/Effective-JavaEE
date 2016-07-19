@@ -18,7 +18,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQuery(name = ToDo.findAll, query = "SELECT t FROM ToDo t")
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@CrossCheck
+@CrossCheck(message = "validation.todo.crosscheckfailed")
 public class ToDo implements ValidEntity {
 
     public void setCaption(String caption) {

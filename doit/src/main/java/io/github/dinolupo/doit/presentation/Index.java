@@ -6,10 +6,13 @@ import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 import javax.annotation.PostConstruct;
 import javax.enterprise.inject.Model;
 import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 /**
@@ -36,8 +39,13 @@ public class Index {
     }
 
     public void showValidationError(String content) {
-        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_WARN, content, content);
-        FacesContext.getCurrentInstance().addMessage("", message);
+        FacesContext context = FacesContext.getCurrentInstance();
+        String msgBundle = context.getApplication().getMessageBundle();
+        Locale locale = context.getViewRoot().getLocale();
+        ResourceBundle messageBundle = ResourceBundle.getBundle(msgBundle,locale);
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_WARN,
+                messageBundle.getString(content), content);
+        context.addMessage(null, message);
     }
 
     // JSF action
