@@ -24,7 +24,15 @@
         <p:outputLabel for="priority" value="#{i18n['index.priority']}: "/>
         <p:inputText id="priority" value="#{index.todo.priority}" label="#{i18n['index.priority']}"/>
 
-        <p:commandButton value="Save" action="#{index.save}" update="messages, growl"/>
+        <p:commandButton value="Save" action="#{index.save}" update="messages, growl, reminders"/>
+
+        <p:dataList id="reminders" value="#{index.toDos}" var="todo" type="ordered">
+            <f:facet name="header">
+                #{i18n['index.reminders.list']}
+            </f:facet>
+            #{todo.caption}, #{todo.description}, #{todo.priority}
+        </p:dataList>
+
     </h:form>
 </h:body>
 </html>

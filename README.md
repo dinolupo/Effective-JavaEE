@@ -1603,3 +1603,26 @@ public class Index {
 }
 ```
 
+### 32.JSF Tables With Primefaces
+
+To add a table with PrimeFaces, let's do the following:
+
+1) Choose the right component (remember that using Prime Faces or any other JSF component library is productive if you do not modify the behaviour of the components). Go to the PrimeFaces Showcase and let's suppose we have chosen [DataList](http://www.primefaces.org/showcase/ui/data/dataList.xhtml), the first one with an ordered list. 
+
+2) Take the code and add to our `index.xhtml' page:
+
+```xml
+<p:dataList id="reminders" value="#{index.toDos}" var="todo" type="ordered">
+    <f:facet name="header">
+        #{i18n['index.reminders.list']}
+    </f:facet>
+    #{todo.caption}, #{todo.description}, #{todo.priority}
+</p:dataList>
+```
+
+3) Add the `reminders` id of the table to the `update` command button property, in this way you update the list when adding new ToDos: 
+
+```xml
+<p:commandButton value="Save" action="#{index.save}" update="messages, growl, reminders"/>
+``` 
+

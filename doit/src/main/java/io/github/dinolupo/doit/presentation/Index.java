@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -46,6 +47,10 @@ public class Index {
         FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_WARN,
                 messageBundle.getString(content), content);
         context.addMessage(null, message);
+    }
+
+    public List<ToDo> getToDos(){
+        return boundary.findAll();
     }
 
     // JSF action
