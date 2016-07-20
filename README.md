@@ -1626,3 +1626,64 @@ To add a table with PrimeFaces, let's do the following:
 <p:commandButton value="Save" action="#{index.save}" update="messages, growl, reminders"/>
 ``` 
 
+### 33.JSF And CSS Frameworks Like Bootstrap
+
+Let's add some style to our JSF page:
+
+1) add a `panelGrid` with a header, to better render our input form:
+ 
+```xml
+<p:panelGrid columns="2" cellpadding="5">
+    <f:facet name="header">
+        #{i18n['index.form.label']}
+    </f:facet>
+    <h:outputLabel for="caption" value="#{i18n['index.caption']}: "/>
+    <input jsf:id="caption"
+           type="text"
+           placeholder="Enter the caption"
+           value="#{index.todo.caption}"
+           label="#{i18n['index.caption']}"/>
+
+    <p:outputLabel for="description" value="#{i18n['index.description']}: "/>
+    <p:inputText id="description" value="#{index.todo.description}" label="#{i18n['index.description']}"/>
+
+    <p:outputLabel for="priority" value="#{i18n['index.priority']}: "/>
+    <p:inputText id="priority" value="#{index.todo.priority}" label="#{i18n['index.priority']}"/>
+</p:panelGrid>
+``` 
+
+2) Before adding some style to HTML5 components, let's first we remove the prefix for field names using: 
+
+```html
+<h:form prependId="false">
+```
+
+3) We left an HTML5 input field (caption), so let's show how to add some style with the Bootstrap CSS Library, add `class="form-control"` to the html5 control:  
+
+> HTML5 input field with class parameter
+
+```html
+<input jsf:id="caption"
+       type="text"
+       placeholder="Enter the caption"
+       value="#{index.todo.caption}"
+       label="#{i18n['index.caption']}"
+       class="form-control"/>
+```
+
+**Do not forget the `label` property because of the i18n validation messages. If `label` is missing then the value of the `id` property will be used.** 
+
+4) Add bootstrap library in the `head` section:
+
+> you can copy the text from the Boostrap site, but do not forget to close the xml link tag
+
+```xml
+<h:head>
+    <title>Facelet Title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"/>
+</h:head>
+```
+
+
+
+

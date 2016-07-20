@@ -9,20 +9,31 @@
       xmlns:p="http://primefaces.org/ui">
 <h:head>
     <title>Facelet Title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"/>
 </h:head>
 <h:body>
-    <h:form>
+    <h:form prependId="false">
         <p:messages id="messages" showDetail="false" autoUpdate="true" closable="true"/>
         <p:growl id="growl" showDetail="true" life="2000"/>
 
-        <h:outputLabel for="caption" value="#{i18n['index.caption']}: "/>
-        <h:inputText id="caption" value="#{index.todo.caption}" label="#{i18n['index.caption']}"/>
+        <p:panelGrid columns="2" cellpadding="5">
+            <f:facet name="header">
+                #{i18n['index.form.label']}
+            </f:facet>
+            <p:outputLabel for="caption" value="#{i18n['index.caption']}: "/>
+            <input jsf:id="caption"
+                   type="text"
+                   placeholder="Enter the caption"
+                   value="#{index.todo.caption}"
+                   label="#{i18n['index.caption']}"
+                   class="form-control"/>
 
-        <p:outputLabel for="description" value="#{i18n['index.description']}: "/>
-        <p:inputText id="description" value="#{index.todo.description}" label="#{i18n['index.description']}"/>
+            <p:outputLabel for="description" value="#{i18n['index.description']}: "/>
+            <p:inputText id="description" value="#{index.todo.description}" label="#{i18n['index.description']}"/>
 
-        <p:outputLabel for="priority" value="#{i18n['index.priority']}: "/>
-        <p:inputText id="priority" value="#{index.todo.priority}" label="#{i18n['index.priority']}"/>
+            <p:outputLabel for="priority" value="#{i18n['index.priority']}: "/>
+            <p:inputText id="priority" value="#{index.todo.priority}" label="#{i18n['index.priority']}"/>
+        </p:panelGrid>
 
         <p:commandButton value="Save" action="#{index.save}" update="messages, growl, reminders"/>
 
