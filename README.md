@@ -1684,6 +1684,86 @@ Let's add some style to our JSF page:
 </h:head>
 ```
 
+### 35.Auditing Changes With JPA Listeners
 
+We are going to show hot to decorate a bean to log operations on entities, with JPA Entity Listeners:
+
+1) Create a listener class in the `entity` package:
+
+> Audit when the entity is persisted 
+
+```java
+public class ToDoAuditor {
+
+    @PostPersist
+    public void onToDoUpdate(ToDo todo) {
+        System.out.printf("---------------> %s\n", todo.toString());
+    }
+}
+```
+
+2) Add an Annotation to the entity:
+
+> Register the Listener onto the `ToDo` entity:
+
+```java
+...
+@EntityListeners(ToDoAuditor.class)
+public class ToDo implements ValidEntity {...}
+```
+
+3) Run and insert a ToDo to see the logged output
+
+Now, let's suppose we want to track the changes made on an Entity, we can create a new class:
+
+1) Create a `ToDoEntityTracker` in the control package:
+
+```java
+package io.github.dinolupo.doit.business.reminders.control;
+
+import io.github.dinolupo.doit.business.reminders.entity.ToDo;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.TransactionPhase;
+
+public class ToDoChangeTracker {
+    // only observe on success update
+    public void onToDoChange(@Observes(during = TransactionPhase.AFTER_SUCCESS) ToDo todo){
+        System.out.printf("########## ToDo changed and committed: %s\n", todo);
+    }
+}
+```
+
+2) We should use now the newly created `ToDoChangeTracker` into the `ToDoAuditor` class, but we do not want to violate the dependency rule of the BCE pattern, so we cannot inject the `control` class into the `entity` class. But we could send an Event, it is ok to send Event and capture those events in other classes.
+
+```java
+public class ToDoAuditor {
+
+    @Inject
+    Event<ToDo> events;
+
+    @PostPersist
+    public void onToDoUpdate(ToDo todo) {
+        System.out.printf("---------------> %s\n", todo.toString());
+        events.fire(todo);
+    }
+}
+```
+
+**Warning** in Wildfly 10 the injection does not work, so switch to Payara or Glassfish to try the example. 
+
+When switching to Payara, you doesn't have anymore the H2 default database, but the Derby DB. You have to start the DB manually, so go to the bin directory of the application server and run the following command to start the Database:
+
+```sh
+cd <Payara Direcotry>/bin
+./asadmin start-database
+```
+
+if needed, you can use your DB tool to inspect the database using the following connection data:
+
+```text
+URL: jdbc:derby://localhost:1527/sun-appserv-samples
+user: APP
+password: APP
+```
 
 

@@ -19,6 +19,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @CrossCheck(message = "validation.todo.crosscheckfailed")
+@EntityListeners(ToDoAuditor.class)
 public class ToDo implements ValidEntity {
 
     public void setCaption(String caption) {
