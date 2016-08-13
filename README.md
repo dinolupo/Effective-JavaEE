@@ -1908,3 +1908,195 @@ public class ToDoChangeTrackerTest {
 
 4) Run the test and the server, the test will wait until you insert a message into the web interface.
 
+### 38.JSON Over WebSockets
+
+We now want to serialize the object with Json and we want to serialize also the type of the operation like Created or Uopdated.
+
+
+1) First of all, to distinguish if it is a creation or an update, we will add a new qualifier to our project, creating the following in the boundary package of the doit project:
+
+> create a new `@Qualifier`
+
+```java
+import javax.inject.Qualifier;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+public @interface ChangeEvent {
+    Type value();
+
+    enum Type {
+        CREATION, UPDATE;
+    }
+}
+```
+
+2) We will use this qualifier into the ToDoAuditor class:
+
+> Modify the `ToDoAuditor` class to distinguish between creation and update events
+
+```java
+import io.github.dinolupo.doit.business.reminders.boundary.ChangeEvent;
+
+import javax.ejb.EJB;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.persistence.PostPersist;
+import javax.persistence.PostUpdate;
+
+public class ToDoAuditor {
+
+    // CDI Injection on JPA Listeners does not work on WildFly 10, switch to Payara or Glassfish
+
+    @Inject
+    @ChangeEvent(ChangeEvent.Type.CREATION)
+    Event<ToDo> create;
+
+    @Inject
+    @ChangeEvent(ChangeEvent.Type.UPDATE)
+    Event<ToDo> update;
+
+    @PostUpdate
+    public void onUpdate(ToDo todo) {
+        update.fire(todo);
+    }
+
+    @PostPersist
+    public void onPersist(ToDo todo) {
+        create.fire(todo);
+    }
+}
+```
+
+In this class now we have two different types of events that will be fired on `@PostPersist` or `@PostUpdate`. The events will carry the previously created qualifier with them.
+
+3) To serialize JSON via websockets, we need an Encoder, so let's create it:
+
+> Create an Encoder for Json to serialize it via websockets:
+
+```java
+package io.github.dinolupo.doit.business.reminders.boundary;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonWriter;
+import javax.websocket.EncodeException;
+import javax.websocket.Encoder;
+import javax.websocket.EndpointConfig;
+import java.io.IOException;
+import java.io.Writer;
+
+public class JsonEncoder implements Encoder.TextStream<JsonObject> {
+
+    @Override
+    public void init(EndpointConfig config) {
+    }
+
+    @Override
+    public void encode(JsonObject payload, Writer writer) throws EncodeException, IOException 	{
+        // use autocloseable feature
+        try (JsonWriter jsonWriter = Json.createWriter(writer)) {
+            jsonWriter.writeObject(payload);
+        }
+    }
+
+    @Override
+    public void destroy() {
+    }
+}
+```
+
+Then we modify the ToDoChangeTracker class to send a Json object:
+
+> use the Encoder and send Json object instead of String in the `ToDoChangeTracker` class:
+
+```java
+package io.github.dinolupo.doit.business.reminders.boundary;
+
+import io.github.dinolupo.doit.business.reminders.entity.ToDo;
+
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.Singleton;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.TransactionPhase;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.websocket.EncodeException;
+import javax.websocket.OnClose;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
+
+/**
+ * Created by dinolupo.github.io on 26/07/16.
+ */
+@Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@ServerEndpoint(value = "/changes", encoders = {JsonEncoder.class})
+public class ToDoChangeTracker {
+
+    private Session session;
+
+    @OnOpen
+    public void onOpen(Session session){
+        this.session = session;
+    }
+
+    @OnClose
+    public void onClose(){
+        session = null;
+    }
+
+    // only observe on success creation
+    public void onToDoCreation(@Observes(during = TransactionPhase.AFTER_SUCCESS)
+     				@ChangeEvent(ChangeEvent.Type.CREATION) ToDo todo) throws EncodeException {
+        if (session != null && session.isOpen()) {
+            try {
+                JsonObject event = Json.createObjectBuilder()
+                        .add("id", todo.getId())
+                        .add("mode", ChangeEvent.Type.CREATION.toString())
+                        .build();
+                session.getBasicRemote().sendObject(event);
+            } catch (IOException e) {
+                // ignore because the connection could be closed anytime
+            }
+        }
+    }
+}
+```
+
+As we see from the previous code the folling has changed:
+
+a) using encoder in the class declaration:
+
+> add encoders parameter
+
+```java
+@ServerEndpoint(value = "/changes", encoders = {JsonEncoder.class})
+```
+
+b) get only event of type CREATION (we need to implement another method for UPDATE)
+
+> add a qualifier on ToDo method parameter
+
+```java
+@ChangeEvent(ChangeEvent.Type.CREATION)
+```
+
+c) Create a Json object instead of toString() and use sendObject() to the remote endpoint
+
+> Json object creation
+
+```java
+JsonObject event = Json.createObjectBuilder()
+                        .add("id", todo.getId())
+                        .add("mode", ChangeEvent.Type.CREATION.toString())
+                        .build();
+```
