@@ -1823,4 +1823,88 @@ public class ToDoChangeTracker {
 
 In real world enterprise applications we do not send the String representation but a more structured object like a Json object. In the following paragraph we will see how to test a websocket implementing a Client and we will change the message into a Json object.
 
+### 37.Implementing A Java WebSocket Client
+
+How to quickly test a websocket? 
+
+1) add a client dependency on the pom.xml
+
+Tyrus is the reference implementation of Web Sockets
+
+> pom.xml dependency for websocket client
+
+```xml
+<!-- https://mvnrepository.com/artifact/org.glassfish.tyrus/tyrus-server -->
+<dependency>
+    <groupId>org.glassfish.tyrus</groupId>
+    <artifactId>tyrus-server</artifactId>
+    <version>1.13</version>
+</dependency>
+```
+
+2) We need a Helper class, a Changes Listener to be able to recevive WebSocket messages in our test:
+
+> add a ChangesListener class to the doit-st project:
+
+```java
+import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
+import javax.websocket.Session;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+public class ChangesListener extends Endpoint {
+
+    String message;
+    CountDownLatch latch = new CountDownLatch(1);
+
+    @Override
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
+        session.addMessageHandler(String.class, s -> {
+            message = s;
+            latch.countDown();
+            System.out.println("onOpen message: " + message);
+        });
+    }
+
+    public String getMessage() throws InterruptedException {
+        latch.await(1, TimeUnit.MINUTES);
+        return message;
+    }
+}
+```
+
+In this test, we should create a message reusing some code from the CRUD test, but to show quickly how it works, we will add the message via the browser.
+
+So, in the Changes Listener class, we wait 1 minute to receive the message via websocket using a CountDownLatch to wait for it.
+
+3) Go to the System Test (Integration Tests) project and add a new class (JUnit)
+
+```java
+import static org.junit.Assert.assertNotNull;
+
+public class ToDoChangeTrackerTest {
+
+    private WebSocketContainer webSocketContainer;
+    private ChangesListener listener;
+
+    @Before
+    public void initContainer() throws URISyntaxException, IOException, DeploymentException {
+        webSocketContainer = ContainerProvider.getWebSocketContainer();
+        URI uri = new URI("ws://localhost:8080/doit/changes");
+        this.listener = new ChangesListener();
+        webSocketContainer.connectToServer(listener, uri);
+    }
+
+    @Test
+    public void receiveNotifications() throws InterruptedException {
+        String message = listener.getMessage();
+        assertNotNull(message);
+        System.out.println("receiveNotifications message: " + message);
+    }
+
+}
+```
+
+4) Run the test and the server, the test will wait until you insert a message into the web interface.
 
