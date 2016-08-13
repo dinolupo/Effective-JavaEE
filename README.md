@@ -34,7 +34,7 @@ For package definition we can have the following convention:
 
 `<company name>.<application name>.<layer>.<component>.<type>`
 
-Because in out case we want to separate Presentation from Business Logic and Integration classes, in our case the `layer` part of the package path can be one of the following:
+Because in our case we want to separate Presentation from Business Logic and Integration classes, in our case the `layer` part of the package path can be one of the following:
 
 - presentation (layer)
 - business (layer)
@@ -1765,5 +1765,62 @@ URL: jdbc:derby://localhost:1527/sun-appserv-samples
 user: APP
 password: APP
 ```
+
+### 36.Distributing Notifications With WebSockets
+
+Instead of writing change notifications with System.out, we should do something more interesting, like distributing notifications via Web Sockets. To do this, let's refactor the class `ToDoChangeTracker` moving it to the boundary package. 
+
+To transform the class into a Web Socket ready component, let's do the following:
+
+1) Add an annotation `@ServerEndpoint("/changes")` to the class
+
+2) Transform the class into a Singleton EJB with concurrency management type BEAN (no locking)
+
+3) Add a Session field and add methods to open and close the Session:
+
+```java
+import io.github.dinolupo.doit.business.reminders.entity.ToDo;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.Singleton;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.TransactionPhase;
+import javax.websocket.OnClose;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
+
+@Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@ServerEndpoint("/changes")
+public class ToDoChangeTracker {
+
+    private Session session;
+
+    @OnOpen
+    public void onOpen(Session session){
+        this.session = session;
+    }
+
+    @OnClose
+    public void onClose(){
+        session = null;
+    }
+
+    // only observe on success update
+    public void onToDoChange(@Observes(during = TransactionPhase.AFTER_SUCCESS) ToDo todo) {
+        if (session != null && session.isOpen()) {
+            try {
+                session.getBasicRemote().sendText(todo.toString());
+            } catch (IOException e) {
+                // ignore because the connection could be closed anytime
+            }
+        }
+    }
+}
+```
+
+In real world enterprise applications we do not send the String representation but a more structured object like a Json object. In the following paragraph we will see how to test a websocket implementing a Client and we will change the message into a Json object.
 
 

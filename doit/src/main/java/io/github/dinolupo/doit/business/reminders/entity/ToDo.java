@@ -90,6 +90,18 @@ public class ToDo implements ValidEntity {
     }
 
     @Override
+    public String toString() {
+        return "ToDo{" +
+                "id=" + id +
+                ", caption='" + caption + '\'' +
+                ", description='" + description + '\'' +
+                ", priority=" + priority +
+                ", done=" + done +
+                ", version=" + version +
+                '}';
+    }
+
+    @Override
     public boolean isValid() {
         return (priority > 10 && description != null && !description.isEmpty()) || priority <= 10;
     }
