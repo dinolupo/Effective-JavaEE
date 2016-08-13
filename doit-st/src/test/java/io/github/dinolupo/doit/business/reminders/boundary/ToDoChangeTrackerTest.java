@@ -3,12 +3,15 @@ package io.github.dinolupo.doit.business.reminders.boundary;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.json.JsonObject;
+import javax.websocket.ClientEndpointConfig;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.WebSocketContainer;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -25,12 +28,15 @@ public class ToDoChangeTrackerTest {
         webSocketContainer = ContainerProvider.getWebSocketContainer();
         URI uri = new URI("ws://localhost:8080/doit/changes");
         this.listener = new ChangesListener();
-        webSocketContainer.connectToServer(listener, uri);
+        ClientEndpointConfig cec = ClientEndpointConfig.Builder.create()
+                .decoders(Arrays.asList(JsonDecoder.class))
+                .build();
+        webSocketContainer.connectToServer(listener, cec, uri);
     }
 
     @Test
     public void receiveNotifications() throws InterruptedException {
-        String message = listener.getMessage();
+        JsonObject message = listener.getMessage();
         assertNotNull(message);
         System.out.println("receiveNotifications message: " + message);
     }

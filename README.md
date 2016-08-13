@@ -2100,3 +2100,46 @@ JsonObject event = Json.createObjectBuilder()
                         .add("mode", ChangeEvent.Type.CREATION.toString())
                         .build();
 ```
+
+### 39.Client-side JSON Decoding
+
+Now let's add support to decode JSON on the client side
+
+1) In the dois-st project, add a decoder class
+
+> JsonDecoder
+
+```java
+package io.github.dinolupo.doit.business.reminders.boundary;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.websocket.DecodeException;
+import javax.websocket.Decoder;
+import javax.websocket.EndpointConfig;
+import java.io.IOException;
+import java.io.Reader;
+
+public class JsonDecoder implements Decoder.TextStream<JsonObject> {
+
+    @Override
+    public void init(EndpointConfig endpointConfig) {
+    }
+
+    @Override
+    public JsonObject decode(Reader reader) throws DecodeException, IOException {
+        try (JsonReader jsonReader = Json.createReader(reader)) {
+            return jsonReader.readObject();
+        }
+    }
+
+    @Override
+    public void destroy() {
+    }
+}
+```
+
+2) Change all the String message types into JsonObject type in the `ChangesListener` class and `ToDoChangeTrackerTest.receiveNotifications()` method
+
+3) Run the test again to see the output
