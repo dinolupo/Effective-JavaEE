@@ -1,4 +1,4 @@
-package io.github.dinolupo.doit.business.reminders.boundary;
+package io.github.dinolupo.doit.business.encoders;
 
 import javax.json.Json;
 import javax.json.JsonObject;

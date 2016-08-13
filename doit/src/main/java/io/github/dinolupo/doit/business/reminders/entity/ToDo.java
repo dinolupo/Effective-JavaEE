@@ -1,8 +1,8 @@
 package io.github.dinolupo.doit.business.reminders.entity;
 
 
-import io.github.dinolupo.doit.business.CrossCheck;
-import io.github.dinolupo.doit.business.ValidEntity;
+import io.github.dinolupo.doit.business.validation.CrossCheck;
+import io.github.dinolupo.doit.business.validation.ValidEntity;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;

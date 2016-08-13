@@ -1,5 +1,6 @@
 package io.github.dinolupo.doit.business.reminders.boundary;
 
+import io.github.dinolupo.doit.business.encoders.JsonEncoder;
 import io.github.dinolupo.doit.business.reminders.entity.ToDo;
 
 import javax.ejb.ConcurrencyManagement;

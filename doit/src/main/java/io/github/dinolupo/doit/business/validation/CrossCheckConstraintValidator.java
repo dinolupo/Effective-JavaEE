@@ -1,4 +1,4 @@
-package io.github.dinolupo.doit.business;
+package io.github.dinolupo.doit.business.validation;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;

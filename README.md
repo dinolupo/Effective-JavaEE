@@ -2143,3 +2143,9 @@ public class JsonDecoder implements Decoder.TextStream<JsonObject> {
 2) Change all the String message types into JsonObject type in the `ChangesListener` class and `ToDoChangeTrackerTest.receiveNotifications()` method
 
 3) Run the test again to see the output
+
+### Refactoring the packages
+
+It is forbidden to use generic package names like `utils` or `infrastructure`. 
+In our code we have put the `JsonEncoder` class in the boundary package, it is correct because only one class use it, but to organize better we could put the class in the `encoders` package. Also we could introduce a `validation` package to put all the CROSS CHECK related classes.
+  
